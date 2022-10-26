@@ -239,7 +239,7 @@ def pylsp_lint(
             # dmypy exists on path
             # -> use mypy on path
             completed_process = subprocess.run(
-                ["dmypy", *apply_overrides(args, overrides)], stderr=subprocess.PIPE, **windows_flag
+                ["dmypy", "status"], stderr=subprocess.PIPE, **windows_flag
             )
             errors = completed_process.stderr.decode()
             exit_status = completed_process.returncode
@@ -250,6 +250,7 @@ def pylsp_lint(
                     errors.strip(),
                 )
                 subprocess.run(["dmypy", "kill"], **windows_flag)
+                subprocess.run(["dmypy", "start"], **windows_flag)
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
             # -> use dmypy via api
@@ -261,6 +262,7 @@ def pylsp_lint(
                     errors.strip(),
                 )
                 mypy_api.run_dmypy(["kill"])
+                mypy_api.run_dmypy(["start"])
 
         # run to use existing daemon or restart if required
         args = ["run", "--"] + apply_overrides(args, overrides)
