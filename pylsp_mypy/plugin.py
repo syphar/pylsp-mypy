@@ -249,8 +249,7 @@ def pylsp_lint(
                     exit_status,
                     errors.strip(),
                 )
-                subprocess.run(["dmypy", "kill"], **windows_flag)
-                subprocess.run(["dmypy", "start"], **windows_flag)
+                subprocess.run(["dmypy", "restart"], **windows_flag)
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
             # -> use dmypy via api
