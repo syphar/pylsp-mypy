@@ -15,7 +15,7 @@ from pylsp_mypy import plugin
 DOC_URI = f"file:/{Path(__file__)}"
 DOC_TYPE_ERR = """{}.append(3)
 """
-TYPE_ERR_MSG = '"Dict[<nothing>, <nothing>]" has no attribute "append"'
+TYPE_ERR_MSG = '"Dict[<nothing>, <nothing>]" has no attribute "append"  [attr-defined]'
 
 TEST_LINE = 'test_plugin.py:279:8: error: "Request" has no attribute "id"'
 TEST_LINE_WITHOUT_COL = "test_plugin.py:279: " 'error: "Request" has no attribute "id"'
@@ -108,7 +108,7 @@ def foo():
     return
     unreachable = 1
 """
-    DOC_ERR_MSG = "Statement is unreachable"
+    DOC_ERR_MSG = "Statement is unreachable  [unreachable]"
 
     # Initialize two workspace folders.
     folder1 = tmpdir.mkdir("folder1")
