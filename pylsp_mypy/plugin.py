@@ -260,8 +260,7 @@ def pylsp_lint(
                     exit_status,
                     errors.strip(),
                 )
-                mypy_api.run_dmypy(["kill"])
-                mypy_api.run_dmypy(["start"])
+                mypy_api.run_dmypy(["restart"])
 
         # run to use existing daemon or restart if required
         args = ["run", "--"] + apply_overrides(args, overrides)
