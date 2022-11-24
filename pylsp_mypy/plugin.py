@@ -125,7 +125,7 @@ def pylsp_lint(
     config: Config, workspace: Workspace, document: Document, is_saved: bool
 ) -> List[Dict[str, Any]]:
     """
-    Lints.
+    Call the linter.
 
     Parameters
     ----------
@@ -157,6 +157,40 @@ def pylsp_lint(
         if settings == {}:
             settings = oldSettings2
 
+    if settings.get("report_progress", False):
+        with workspace.report_progress("lint: mypy"):
+            return get_diagnostics(config, workspace, document, settings, is_saved)
+    else:
+        return get_diagnostics(config, workspace, document, settings, is_saved)
+
+
+def get_diagnostics(
+    config: Config,
+    workspace: Workspace,
+    document: Document,
+    settings: Dict[str, Any],
+    is_saved: bool,
+) -> List[Dict[str, Any]]:
+    """
+    Lints.
+
+    Parameters
+    ----------
+    config : Config
+        The pylsp config.
+    workspace : Workspace
+        The pylsp workspace.
+    document : Document
+        The document to be linted.
+    is_saved : bool
+        Weather the document is saved.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        List of the linting data.
+
+    """
     log.info(
         "lint settings = %s document.path = %s is_saved = %s",
         settings,
