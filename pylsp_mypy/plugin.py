@@ -145,14 +145,11 @@ def pylsp_lint(
     """
     settings = config.plugin_settings("pylsp_mypy")
     oldSettings1 = config.plugin_settings("mypy-ls")
-    if oldSettings1 != {}:
-        raise DeprecationWarning(
-            "Your configuration uses the namespace mypy-ls, this should be changed to pylsp_mypy"
-        )
     oldSettings2 = config.plugin_settings("mypy_ls")
-    if oldSettings2 != {}:
-        raise DeprecationWarning(
-            "Your configuration uses the namespace mypy_ls, this should be changed to pylsp_mypy"
+    if oldSettings1 != {} or oldSettings2 != {}:
+        raise NameError(
+            "Your configuration uses an old namespace (mypy-ls or mypy_ls)."
+            + "This should be changed to pylsp_mypy"
         )
     if settings == {}:
         settings = oldSettings1
@@ -402,7 +399,7 @@ def findConfigFile(path: str, names: List[str]) -> Optional[str]:
             file = parent.joinpath(name)
             if file.is_file():
                 if file.name in ["mypy-ls.cfg", "mypy_ls.cfg"]:
-                    raise DeprecationWarning(
+                    raise NameError(
                         f"{str(file)}: {file.name} is no longer supported, you should rename your "
                         "config file to pylsp-mypy.cfg or preferably use a pyproject.toml instead."
                     )

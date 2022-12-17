@@ -245,7 +245,7 @@ def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):
 
     assert not statusFile.exists()
 
-    diags = plugin.pylsp_lint(
+    plugin.pylsp_lint(
         config=FakeConfig(),
         workspace=workspace,
         document=document,
