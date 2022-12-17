@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from configparser import ConfigParser
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional
 
@@ -357,7 +358,7 @@ def init(workspace: str) -> Dict[str, str]:
 
     configuration = {}
     path = findConfigFile(
-        workspace, ["pylsp-mypy.cfg", "mypy-ls.cfg", "mypy_ls.cfg", "pyproject.toml"]
+        workspace, ["pylsp-mypy.cfg", "mypy-ls.cfg", "mypy_ls.cfg", "pyproject.toml"], False
     )
     if path:
         if "pyproject.toml" in path:
@@ -366,14 +367,16 @@ def init(workspace: str) -> Dict[str, str]:
             with open(path) as file:
                 configuration = ast.literal_eval(file.read())
 
-    mypyConfigFile = findConfigFile(workspace, ["mypy.ini", ".mypy.ini", "pyproject.toml"])
+    mypyConfigFile = findConfigFile(
+        workspace, ["mypy.ini", ".mypy.ini", "pyproject.toml", "setup.cfg"], True
+    )
     mypyConfigFileMap[workspace] = mypyConfigFile
 
     log.info("mypyConfigFile = %s configuration = %s", mypyConfigFile, configuration)
     return configuration
 
 
-def findConfigFile(path: str, names: List[str]) -> Optional[str]:
+def findConfigFile(path: str, names: List[str], mypy: bool) -> Optional[str]:
     """
     Search for a config file.
 
@@ -386,6 +389,8 @@ def findConfigFile(path: str, names: List[str]) -> Optional[str]:
         The path where the search starts.
     names : List[str]
         The file to be found (or alternative names).
+    mypy : bool
+        whether the config file searched is for mypy (plugin otherwise)
 
     Returns
     -------
@@ -404,17 +409,28 @@ def findConfigFile(path: str, names: List[str]) -> Optional[str]:
                         "config file to pylsp-mypy.cfg or preferably use a pyproject.toml instead."
                     )
                 if file.name == "pyproject.toml":
-                    isPluginConfig = "pylsp-mypy.cfg" in names
                     configPresent = (
-                        toml.load(file)
-                        .get("tool", {})
-                        .get("pylsp-mypy" if isPluginConfig else "mypy")
+                        toml.load(file).get("tool", {}).get("mypy" if mypy else "pylsp-mypy")
                         is not None
                     )
                     if not configPresent:
                         continue
+                if file.name == "setup.cfg":
+                    config = ConfigParser()
+                    config.read(str(file))
+                    if "mypy" not in config:
+                        continue
                 return str(file)
-
+    # No config file found in the whole directory tree
+    # -> check mypy default locations for mypy config
+    if mypy:
+        defaultPaths = ["~/.config/mypy/config", "~/.mypy.ini"]
+        XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME")
+        if XDG_CONFIG_HOME:
+            defaultPaths.insert(0, f"{XDG_CONFIG_HOME}/mypy/config")
+        for path in defaultPaths:
+            if Path(path).expanduser().exists():
+                return str(Path(path).expanduser())
     return None
 
 
