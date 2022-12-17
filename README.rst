@@ -36,6 +36,9 @@ Configuration
 ``overrides`` (default is ``[True]``) specifies a list of alternate or supplemental command-line options.
     This modifies the options passed to ``mypy`` or the mypy-specific ones passed to ``dmypy run``. When present, the special boolean member ``True`` is replaced with the command-line options that would've been passed had ``overrides`` not been specified. Later options take precedence, which allows for replacing or negating individual default options (see ``mypy.main:process_options`` and ``mypy --help | grep inverse``).
 
+``dmypy_status_file`` (Default is ``.dmypy.json``) specifies which status file dmypy should use.
+    This modifies the ``--status-file`` option passed to ``dmypy`` given ``dmypy`` is active.
+
 This project supports the use of ``pyproject.toml`` for configuration. It is in fact the preferred way. Using that your configuration could look like this:
 
 ::
@@ -76,6 +79,17 @@ With ``overrides`` specified (for example to tell mypy to use a different python
         "overrides": ["--python-executable", "/home/me/bin/python", True]
     }
 
+With ``dmypy_status_file`` your config could look like this:
+
+::
+
+    {
+        "enabled": True,
+        "live_mode": False,
+        "dmypy": True,
+        "strict": False,
+        "dmypy_status_file": ".custom_dmypy_status_file.json"
+    }
 
 Developing
 -------------

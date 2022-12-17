@@ -214,6 +214,8 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
     )
     expected = [
         "dmypy",
+        "--status-file",
+        ".dmypy.json",
         "run",
         "--",
         "--python-executable",
@@ -222,3 +224,32 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
         document.path,
     ]
     m.assert_called_with(expected, stderr=-1, stdout=-1, **windows_flag)
+
+
+def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):
+    statusFile = tmpdir / ".custom_dmypy_status_file.json"
+
+    last_diagnostics_monkeypatch.setattr(
+        FakeConfig,
+        "plugin_settings",
+        lambda _, p: {
+            "dmypy": True,
+            "live_mode": False,
+            "dmypy_status_file": str(statusFile),
+        }
+        if p == "pylsp_mypy"
+        else {},
+    )
+
+    document = Document(DOC_URI, workspace, DOC_TYPE_ERR)
+
+    assert not statusFile.exists()
+
+    diags = plugin.pylsp_lint(
+        config=FakeConfig(),
+        workspace=workspace,
+        document=document,
+        is_saved=False,
+    )
+
+    assert statusFile.exists()

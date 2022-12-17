@@ -44,7 +44,7 @@ last_diagnostics: Dict[str, List[Dict[str, Any]]] = collections.defaultdict(list
 # Windows started opening opening a cmd-like window for every subprocess call
 # This flag prevents that.
 # This flag is new in python 3.7
-# THis flag only exists on Windows
+# This flag only exists on Windows
 windows_flag: Dict[str, int] = (
     {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}  # type: ignore
 )
@@ -175,6 +175,9 @@ def pylsp_lint(
         log.warning("live_mode is not supported with dmypy, disabling")
         live_mode = False
 
+    if dmypy:
+        dmypy_status_file = settings.get("dmypy_status_file", ".dmypy.json")
+
     args = ["--show-column-numbers"]
 
     global tmpFile
@@ -237,9 +240,11 @@ def pylsp_lint(
 
         if shutil.which("dmypy"):
             # dmypy exists on path
-            # -> use mypy on path
+            # -> use dmypy on path
             completed_process = subprocess.run(
-                ["dmypy", "status"], stderr=subprocess.PIPE, **windows_flag
+                ["dmypy", "--status-file", dmypy_status_file, "status"],
+                stderr=subprocess.PIPE,
+                **windows_flag,
             )
             errors = completed_process.stderr.decode()
             exit_status = completed_process.returncode
@@ -249,22 +254,25 @@ def pylsp_lint(
                     exit_status,
                     errors.strip(),
                 )
-                subprocess.run(["dmypy", "restart"], **windows_flag)
+                subprocess.run(
+                    ["dmypy", "--status-file", dmypy_status_file, "restart"], **windows_flag
+                )
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
             # -> use dmypy via api
-            _, errors, exit_status = mypy_api.run_dmypy(["status"])
+            _, errors, exit_status = mypy_api.run_dmypy(
+                ["--status-file", dmypy_status_file, "status"]
+            )
             if exit_status != 0:
                 log.info(
                     "restarting dmypy from status: %s message: %s via api",
                     exit_status,
                     errors.strip(),
                 )
-                mypy_api.run_dmypy(["restart"])
+                mypy_api.run_dmypy(["--status-file", dmypy_status_file, "restart"])
 
         # run to use existing daemon or restart if required
-        args = ["run", "--"] + apply_overrides(args, overrides)
-
+        args = ["--status-file", dmypy_status_file, "run", "--"] + apply_overrides(args, overrides)
         if shutil.which("dmypy"):
             # dmypy exists on path
             # -> use mypy on path
