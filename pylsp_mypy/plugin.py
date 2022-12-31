@@ -377,7 +377,9 @@ def init(workspace: str) -> Dict[str, str]:
     return configuration
 
 
-def findConfigFile(path: str, configSubPaths: List[str], names: List[str], mypy: bool) -> Optional[str]:
+def findConfigFile(
+    path: str, configSubPaths: List[str], names: List[str], mypy: bool
+) -> Optional[str]:
     """
     Search for a config file.
 
@@ -409,8 +411,9 @@ def findConfigFile(path: str, configSubPaths: List[str], names: List[str], mypy:
                 if file.is_file():
                     if file.name in ["mypy-ls.cfg", "mypy_ls.cfg"]:
                         raise NameError(
-                            f"{str(file)}: {file.name} is no longer supported, you should rename your "
-                            "config file to pylsp-mypy.cfg or preferably use a pyproject.toml instead."
+                            f"{str(file)}: {file.name} is no longer supported, you should rename "
+                            "your config file to pylsp-mypy.cfg or preferably use a pyproject.toml "
+                            "instead."
                         )
                     if file.name == "pyproject.toml":
                         configPresent = (

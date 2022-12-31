@@ -12,7 +12,8 @@ from pylsp.workspace import Document, Workspace
 
 from pylsp_mypy import plugin
 
-DOC_URI = f"file:/{Path(__file__)}"  #TODO using these file as a document is a bad idea as tests can break by adding new tests
+# TODO using these file as a document is a bad idea as tests can break by adding new tests
+DOC_URI = f"file:/{Path(__file__)}"
 DOC_TYPE_ERR = """{}.append(3)
 """
 TYPE_ERR_MSG = '"Dict[<nothing>, <nothing>]" has no attribute "append"  [attr-defined]'
@@ -69,7 +70,7 @@ def test_plugin(workspace, last_diagnostics_monkeypatch):
 
 
 def test_parse_full_line(workspace):
-    diag = plugin.parse_line(TEST_LINE) #TODO parse a document here
+    diag = plugin.parse_line(TEST_LINE)  # TODO parse a document here
     assert diag["message"] == '"Request" has no attribute "id"'
     assert diag["range"]["start"] == {"line": 278, "character": 7}
     assert diag["range"]["end"] == {"line": 278, "character": 8}
