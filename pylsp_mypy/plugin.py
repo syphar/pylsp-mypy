@@ -358,7 +358,7 @@ def init(workspace: str) -> Dict[str, str]:
 
     configuration = {}
     path = findConfigFile(
-        workspace, ["pylsp-mypy.cfg", "mypy-ls.cfg", "mypy_ls.cfg", "pyproject.toml"], False
+        workspace, [], ["pylsp-mypy.cfg", "mypy-ls.cfg", "mypy_ls.cfg", "pyproject.toml"], False
     )
     if path:
         if "pyproject.toml" in path:
@@ -367,8 +367,9 @@ def init(workspace: str) -> Dict[str, str]:
             with open(path) as file:
                 configuration = ast.literal_eval(file.read())
 
+    configSubPaths = configuration.get("config_sub_paths", [])
     mypyConfigFile = findConfigFile(
-        workspace, ["mypy.ini", ".mypy.ini", "pyproject.toml", "setup.cfg"], True
+        workspace, configSubPaths, ["mypy.ini", ".mypy.ini", "pyproject.toml", "setup.cfg"], True
     )
     mypyConfigFileMap[workspace] = mypyConfigFile
 
@@ -376,7 +377,9 @@ def init(workspace: str) -> Dict[str, str]:
     return configuration
 
 
-def findConfigFile(path: str, names: List[str], mypy: bool) -> Optional[str]:
+def findConfigFile(
+    path: str, configSubPaths: List[str], names: List[str], mypy: bool
+) -> Optional[str]:
     """
     Search for a config file.
 
@@ -387,6 +390,8 @@ def findConfigFile(path: str, names: List[str], mypy: bool) -> Optional[str]:
     ----------
     path : str
         The path where the search starts.
+    configSubPaths : List[str]
+        Additional sub search paths in which mypy configs might be located
     names : List[str]
         The file to be found (or alternative names).
     mypy : bool
@@ -401,26 +406,28 @@ def findConfigFile(path: str, names: List[str], mypy: bool) -> Optional[str]:
     start = Path(path).joinpath(names[0])  # the join causes the parents to include path
     for parent in start.parents:
         for name in names:
-            file = parent.joinpath(name)
-            if file.is_file():
-                if file.name in ["mypy-ls.cfg", "mypy_ls.cfg"]:
-                    raise NameError(
-                        f"{str(file)}: {file.name} is no longer supported, you should rename your "
-                        "config file to pylsp-mypy.cfg or preferably use a pyproject.toml instead."
-                    )
-                if file.name == "pyproject.toml":
-                    configPresent = (
-                        toml.load(file).get("tool", {}).get("mypy" if mypy else "pylsp-mypy")
-                        is not None
-                    )
-                    if not configPresent:
-                        continue
-                if file.name == "setup.cfg":
-                    config = ConfigParser()
-                    config.read(str(file))
-                    if "mypy" not in config:
-                        continue
-                return str(file)
+            for subPath in [""] + configSubPaths:
+                file = parent.joinpath(subPath).joinpath(name)
+                if file.is_file():
+                    if file.name in ["mypy-ls.cfg", "mypy_ls.cfg"]:
+                        raise NameError(
+                            f"{str(file)}: {file.name} is no longer supported, you should rename "
+                            "your config file to pylsp-mypy.cfg or preferably use a pyproject.toml "
+                            "instead."
+                        )
+                    if file.name == "pyproject.toml":
+                        configPresent = (
+                            toml.load(file).get("tool", {}).get("mypy" if mypy else "pylsp-mypy")
+                            is not None
+                        )
+                        if not configPresent:
+                            continue
+                    if file.name == "setup.cfg":
+                        config = ConfigParser()
+                        config.read(str(file))
+                        if "mypy" not in config:
+                            continue
+                    return str(file)
     # No config file found in the whole directory tree
     # -> check mypy default locations for mypy config
     if mypy:

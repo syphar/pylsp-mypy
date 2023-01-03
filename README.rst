@@ -39,6 +39,9 @@ Configuration
 ``dmypy_status_file`` (Default is ``.dmypy.json``) specifies which status file dmypy should use.
     This modifies the ``--status-file`` option passed to ``dmypy`` given ``dmypy`` is active.
 
+``config_sub_paths`` (default is ``[]``) specifies sub paths under which the mypy configuration file may be found.
+    For each directory searched for the mypy config file, this also searches the sub paths specified here
+
 This project supports the use of ``pyproject.toml`` for configuration. It is in fact the preferred way. Using that your configuration could look like this:
 
 ::
@@ -89,6 +92,15 @@ With ``dmypy_status_file`` your config could look like this:
         "dmypy": True,
         "strict": False,
         "dmypy_status_file": ".custom_dmypy_status_file.json"
+    }
+
+With ``config_sub_paths`` your config could look like this:
+
+::
+
+    {
+        "enabled": True,
+        "config_sub_paths": [".config"]
     }
 
 Developing
