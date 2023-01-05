@@ -43,7 +43,7 @@ Configuration
     For each directory searched for the mypy config file, this also searches the sub paths specified here
 
 ``report_progress`` (default is ``False``) report basic progress to the LSP client.
-    With this option, pylsp-mypy will report when mypy is running, given you editor supports LSP progress reporting. For small files this might produce annoying flashing in your editor, espacially in with ``live_mode``. For large projects, enabling this can be helpfull to assure yourself whether mypy is still running.
+    With this option, pylsp-mypy will report when mypy is running, given your editor supports LSP progress reporting. For small files this might produce annoying flashing in your editor, especially in with ``live_mode``. For large projects, enabling this can be helpful to assure yourself whether mypy is still running.
 
 This project supports the use of ``pyproject.toml`` for configuration. It is in fact the preferred way. Using that your configuration could look like this:
 
