@@ -223,7 +223,7 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
         "--show-column-numbers",
         document.path,
     ]
-    m.assert_called_with(expected, stderr=-1, stdout=-1, **windows_flag)
+    m.assert_called_with(expected, capture_output=True, **windows_flag)
 
 
 def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):
