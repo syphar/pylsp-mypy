@@ -252,9 +252,7 @@ def get_diagnostics(
             # mypy exists on path
             # -> use mypy on path
             log.info("executing mypy args = %s on path", args)
-            completed_process = subprocess.run(
-                ["mypy", *args], capture_output=True, **windows_flag
-            )
+            completed_process = subprocess.run(["mypy", *args], capture_output=True, **windows_flag)
             report = completed_process.stdout.decode()
             errors = completed_process.stderr.decode()
             exit_status = completed_process.returncode
@@ -289,7 +287,7 @@ def get_diagnostics(
                 subprocess.run(
                     ["dmypy", "--status-file", dmypy_status_file, "restart"],
                     capture_output=True,
-                    **windows_flag
+                    **windows_flag,
                 )
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
