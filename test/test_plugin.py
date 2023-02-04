@@ -201,7 +201,7 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
         else {},
     )
 
-    m = Mock(wraps=lambda a, **_: Mock(returncode=0, **{"stdout.decode": lambda: ""}))
+    m = Mock(wraps=lambda a, **_: Mock(returncode=0, **{"stdout": ""}))
     last_diagnostics_monkeypatch.setattr(plugin.subprocess, "run", m)
 
     document = Document(DOC_URI, workspace, DOC_TYPE_ERR)
@@ -223,7 +223,7 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
         "--show-column-numbers",
         document.path,
     ]
-    m.assert_called_with(expected, capture_output=True, **windows_flag)
+    m.assert_called_with(expected, capture_output=True, **windows_flag, encoding="utf-8")
 
 
 def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):

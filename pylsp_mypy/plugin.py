@@ -252,9 +252,11 @@ def get_diagnostics(
             # mypy exists on path
             # -> use mypy on path
             log.info("executing mypy args = %s on path", args)
-            completed_process = subprocess.run(["mypy", *args], capture_output=True, **windows_flag)
-            report = completed_process.stdout.decode()
-            errors = completed_process.stderr.decode()
+            completed_process = subprocess.run(
+                ["mypy", *args], capture_output=True, **windows_flag, encoding="utf-8"
+            )
+            report = completed_process.stdout
+            errors = completed_process.stderr
             exit_status = completed_process.returncode
         else:
             # mypy does not exist on path, but must exist in the env pylsp-mypy is installed in
@@ -275,8 +277,9 @@ def get_diagnostics(
                 ["dmypy", "--status-file", dmypy_status_file, "status"],
                 capture_output=True,
                 **windows_flag,
+                encoding="utf-8",
             )
-            errors = completed_process.stderr.decode()
+            errors = completed_process.stderr
             exit_status = completed_process.returncode
             if exit_status != 0:
                 log.info(
@@ -288,6 +291,7 @@ def get_diagnostics(
                     ["dmypy", "--status-file", dmypy_status_file, "restart"],
                     capture_output=True,
                     **windows_flag,
+                    encoding="utf-8",
                 )
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
@@ -310,10 +314,10 @@ def get_diagnostics(
             # -> use mypy on path
             log.info("dmypy run args = %s via path", args)
             completed_process = subprocess.run(
-                ["dmypy", *args], capture_output=True, **windows_flag
+                ["dmypy", *args], capture_output=True, **windows_flag, encoding="utf-8"
             )
-            report = completed_process.stdout.decode()
-            errors = completed_process.stderr.decode()
+            report = completed_process.stdout
+            errors = completed_process.stderr
             exit_status = completed_process.returncode
         else:
             # dmypy does not exist on path, but must exist in the env pylsp-mypy is installed in
