@@ -43,24 +43,23 @@ def workspace(tmpdir):
 
 
 class FakeConfig(object):
-    def __init__(self):
-        self._root_path = "C://" if os.name == "nt" else "/"
+    def __init__(self, path):
+        self._root_path = path
 
     def plugin_settings(self, plugin, document_path=None):
         return {}
 
 
-def test_settings():
-    config = FakeConfig()
+def test_settings(tmpdir):
+    config = Config(uris.from_fs_path(str(tmpdir)), {}, 0, {})
     settings = plugin.pylsp_settings(config)
     assert settings == {"plugins": {"pylsp_mypy": {}}}
 
 
 def test_plugin(workspace, last_diagnostics_monkeypatch):
-    config = FakeConfig()
     doc = Document(DOC_URI, workspace, DOC_TYPE_ERR)
-    plugin.pylsp_settings(config)
-    diags = plugin.pylsp_lint(config, workspace, doc, is_saved=False)
+    plugin.pylsp_settings(workspace._config)
+    diags = plugin.pylsp_lint(workspace._config, workspace, doc, is_saved=False)
 
     assert len(diags) == 1
     diag = diags[0]
@@ -179,7 +178,7 @@ def test_option_overrides(tmpdir, last_diagnostics_monkeypatch, workspace):
     assert not sentinel.exists()
 
     diags = plugin.pylsp_lint(
-        config=FakeConfig(),
+        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
         workspace=workspace,
         document=Document(DOC_URI, workspace, DOC_TYPE_ERR),
         is_saved=False,
@@ -208,7 +207,7 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
     document = Document(DOC_URI, workspace, DOC_TYPE_ERR)
 
     plugin.pylsp_lint(
-        config=FakeConfig(),
+        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
         workspace=workspace,
         document=document,
         is_saved=False,
@@ -247,7 +246,7 @@ def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):
     assert not statusFile.exists()
 
     plugin.pylsp_lint(
-        config=FakeConfig(),
+        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
         workspace=workspace,
         document=document,
         is_saved=False,
