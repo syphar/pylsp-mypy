@@ -20,7 +20,11 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional
 
-import toml
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 from mypy import api as mypy_api
 from pylsp import hookimpl
 from pylsp.config.config import Config
@@ -400,7 +404,8 @@ def init(workspace: str) -> Dict[str, str]:
     )
     if path:
         if "pyproject.toml" in path:
-            configuration = toml.load(path).get("tool").get("pylsp-mypy")
+            with open(path, "rb") as file:
+                configuration = tomllib.load(file).get("tool").get("pylsp-mypy")
         else:
             with open(path) as file:
                 configuration = ast.literal_eval(file.read())
@@ -454,10 +459,13 @@ def findConfigFile(
                             "instead."
                         )
                     if file.name == "pyproject.toml":
-                        configPresent = (
-                            toml.load(file).get("tool", {}).get("mypy" if mypy else "pylsp-mypy")
-                            is not None
-                        )
+                        with open(file, "rb") as fileO:
+                            configPresent = (
+                                tomllib.load(fileO)
+                                .get("tool", {})
+                                .get("mypy" if mypy else "pylsp-mypy")
+                                is not None
+                            )
                         if not configPresent:
                             continue
                     if file.name == "setup.cfg":
