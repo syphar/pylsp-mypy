@@ -37,6 +37,8 @@ log = logging.getLogger(__name__)
 # A mapping from workspace path to config file path
 mypyConfigFileMap: Dict[str, Optional[str]] = {}
 
+settingsCache: Dict[str, Dict[str, Any]] = {}
+
 tmpFile: Optional[IO[str]] = None
 
 # In non-live-mode the file contents aren't updated.
@@ -124,6 +126,20 @@ def apply_overrides(args: List[str], overrides: List[Any]) -> List[str]:
     return overrides[: -(len(rest) + 1)] + args + rest
 
 
+def didSettingsChange(workspace: str, settings: Dict[str, Any]) -> None:
+    """Handle relevant changes to the settings between runs."""
+    configSubPaths = settings.get("config_sub_paths", [])
+    if settingsCache[workspace].get("config_sub_paths", []) != configSubPaths:
+        mypyConfigFile = findConfigFile(
+            workspace,
+            configSubPaths,
+            ["mypy.ini", ".mypy.ini", "pyproject.toml", "setup.cfg"],
+            True,
+        )
+        mypyConfigFileMap[workspace] = mypyConfigFile
+        settingsCache[workspace] = settings.copy()
+
+
 @hookimpl
 def pylsp_lint(
     config: Config, workspace: Workspace, document: Document, is_saved: bool
@@ -161,15 +177,16 @@ def pylsp_lint(
         if settings == {}:
             settings = oldSettings2
 
+    didSettingsChange(workspace.root_path, settings)
+
     if settings.get("report_progress", False):
         with workspace.report_progress("lint: mypy"):
-            return get_diagnostics(config, workspace, document, settings, is_saved)
+            return get_diagnostics(workspace, document, settings, is_saved)
     else:
-        return get_diagnostics(config, workspace, document, settings, is_saved)
+        return get_diagnostics(workspace, document, settings, is_saved)
 
 
 def get_diagnostics(
-    config: Config,
     workspace: Workspace,
     document: Document,
     settings: Dict[str, Any],
@@ -180,8 +197,6 @@ def get_diagnostics(
 
     Parameters
     ----------
-    config : Config
-        The pylsp config.
     workspace : Workspace
         The pylsp workspace.
     document : Document
@@ -415,6 +430,7 @@ def init(workspace: str) -> Dict[str, str]:
         workspace, configSubPaths, ["mypy.ini", ".mypy.ini", "pyproject.toml", "setup.cfg"], True
     )
     mypyConfigFileMap[workspace] = mypyConfigFile
+    settingsCache[workspace] = configuration.copy()
 
     log.info("mypyConfigFile = %s configuration = %s", mypyConfigFile, configuration)
     return configuration

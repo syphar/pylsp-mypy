@@ -112,15 +112,16 @@ def foo():
 
     # Initialize two workspace folders.
     folder1 = tmpdir.mkdir("folder1")
-    ws1 = Workspace(uris.from_fs_path(str(folder1)), Mock())
-    ws1._config = Config(ws1.root_uri, {}, 0, {})
     folder2 = tmpdir.mkdir("folder2")
-    ws2 = Workspace(uris.from_fs_path(str(folder2)), Mock())
-    ws2._config = Config(ws2.root_uri, {}, 0, {})
 
     # Create configuration file for workspace folder 1.
     mypy_config = folder1.join("mypy.ini")
     mypy_config.write("[mypy]\nwarn_unreachable = True\ncheck_untyped_defs = True")
+
+    ws1 = Workspace(uris.from_fs_path(str(folder1)), Mock())
+    ws1._config = Config(ws1.root_uri, {}, 0, {})
+    ws2 = Workspace(uris.from_fs_path(str(folder2)), Mock())
+    ws2._config = Config(ws2.root_uri, {}, 0, {})
 
     # Initialize settings for both folders.
     plugin.pylsp_settings(ws1._config)
@@ -265,10 +266,6 @@ def foo():
 
     config_sub_paths = [".config"]
 
-    # Initialize workspace.
-    ws = Workspace(uris.from_fs_path(str(tmpdir)), Mock())
-    ws._config = Config(ws.root_uri, {}, 0, {})
-
     # Create configuration file for workspace.
     plugin_config = tmpdir.join("pyproject.toml")
     plugin_config.write(f"[tool.pylsp-mypy]\nenabled = true\nconfig_sub_paths = {config_sub_paths}")
@@ -276,8 +273,44 @@ def foo():
     mypy_config = config_dir.join("mypy.ini")
     mypy_config.write("[mypy]\nwarn_unreachable = True\ncheck_untyped_defs = True")
 
+    # Initialize workspace.
+
+    ws = Workspace(uris.from_fs_path(str(tmpdir)), Mock())
+    ws._config = Config(ws.root_uri, {}, 0, {})
+
     # Update settings for workspace.
     plugin.pylsp_settings(ws._config)
+
+    # Test document to make sure it uses .config/mypy.ini configuration.
+    doc = Document(DOC_URI, ws, DOC_SOURCE)
+    diags = plugin.pylsp_lint(ws._config, ws, doc, is_saved=False)
+    assert len(diags) == 1
+    diag = diags[0]
+    assert diag["message"] == DOC_ERR_MSG
+
+
+def test_config_sub_paths_config_changed(tmpdir, last_diagnostics_monkeypatch):
+    DOC_SOURCE = """
+def foo():
+    return
+    unreachable = 1
+"""
+    DOC_ERR_MSG = "Statement is unreachable  [unreachable]"
+
+    # Create configuration file for workspace.
+    config_dir = tmpdir.mkdir(".config")
+    mypy_config = config_dir.join("mypy.ini")
+    mypy_config.write("[mypy]\nwarn_unreachable = True\ncheck_untyped_defs = True")
+
+    config_sub_paths = [".config"]
+
+    # Initialize workspace.
+    ws = Workspace(uris.from_fs_path(str(tmpdir)), Mock())
+    ws._config = Config(ws.root_uri, {}, 0, {})
+
+    # Update settings for workspace.
+    plugin.pylsp_settings(ws._config)
+    ws.update_config({"pylsp": {"plugins": {"pylsp_mypy": {"config_sub_paths": config_sub_paths}}}})
 
     # Test document to make sure it uses .config/mypy.ini configuration.
     doc = Document(DOC_URI, ws, DOC_SOURCE)
