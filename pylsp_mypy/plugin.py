@@ -128,7 +128,6 @@ def apply_overrides(args: List[str], overrides: List[Any]) -> List[str]:
 
 def didSettingsChange(workspace: str, settings: Dict[str, Any]) -> None:
     """Handle relevant changes to the settings between runs."""
-    log.warning(settingsCache)
     configSubPaths = settings.get("config_sub_paths", [])
     if settingsCache[workspace].get("config_sub_paths", []) != configSubPaths:
         mypyConfigFile = findConfigFile(

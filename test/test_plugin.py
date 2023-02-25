@@ -6,7 +6,7 @@ from typing import Dict
 from unittest.mock import Mock
 
 import pytest
-from pylsp import uris
+from pylsp import _utils, uris
 from pylsp.config.config import Config
 from pylsp.workspace import Document, Workspace
 
@@ -175,10 +175,13 @@ def test_option_overrides(tmpdir, last_diagnostics_monkeypatch, workspace):
         lambda _, p: {"overrides": overrides} if p == "pylsp_mypy" else {},
     )
 
+    config = FakeConfig(uris.to_fs_path(workspace.root_uri))
+    plugin.pylsp_settings(config)
+
     assert not sentinel.exists()
 
     diags = plugin.pylsp_lint(
-        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
+        config=config,
         workspace=workspace,
         document=Document(DOC_URI, workspace, DOC_TYPE_ERR),
         is_saved=False,
@@ -206,8 +209,11 @@ def test_option_overrides_dmypy(last_diagnostics_monkeypatch, workspace):
 
     document = Document(DOC_URI, workspace, DOC_TYPE_ERR)
 
+    config = FakeConfig(uris.to_fs_path(workspace.root_uri))
+    plugin.pylsp_settings(config)
+
     plugin.pylsp_lint(
-        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
+        config=config,
         workspace=workspace,
         document=document,
         is_saved=False,
@@ -243,10 +249,13 @@ def test_dmypy_status_file(tmpdir, last_diagnostics_monkeypatch, workspace):
 
     document = Document(DOC_URI, workspace, DOC_TYPE_ERR)
 
+    config = FakeConfig(uris.to_fs_path(workspace.root_uri))
+    plugin.pylsp_settings(config)
+
     assert not statusFile.exists()
 
     plugin.pylsp_lint(
-        config=FakeConfig(uris.to_fs_path(workspace.root_uri)),
+        config=config,
         workspace=workspace,
         document=document,
         is_saved=False,
@@ -278,7 +287,8 @@ def foo():
     ws._config = Config(ws.root_uri, {}, 0, {})
 
     # Update settings for workspace.
-    plugin.pylsp_settings(ws._config)
+    settings = plugin.pylsp_settings(ws._config)
+    ws._config._plugin_settings = _utils.merge_dicts(ws._config._plugin_settings, settings)
 
     # Test document to make sure it uses .config/mypy.ini configuration.
     doc = Document(DOC_URI, ws, DOC_SOURCE)
